@@ -11,6 +11,12 @@ Route::get('/health', function () {
 });
 
 Route::get('/debug', function () {
+    if (request()->has('clear')) {
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        return ['status' => 'success', 'message' => 'Cache cleared'];
+    }
+
     try {
         $connection = config('database.default');
         $dbConfig = config("database.connections.$connection");
@@ -30,17 +36,20 @@ Route::get('/debug', function () {
             'current_connection' => $connection,
             'database_config' => [
                 'host' => $dbConfig['host'] ?? 'N/A',
+                'port' => $dbConfig['port'] ?? 'N/A',
                 'database' => $dbConfig['database'] ?? 'N/A',
                 'username' => $dbConfig['username'] ?? 'N/A',
-                // Don't show password for security
             ],
             'db_error' => $dbError,
             'tables' => $tables,
             'env_vars_check' => [
                 'DB_CONNECTION' => env('DB_CONNECTION'),
                 'DB_HOST' => env('DB_HOST'),
-                'DB_DATABASE' => env('DB_DATABASE'),
+                'MYSQLHOST' => env('MYSQLHOST'),
+                'DB_PORT' => env('DB_PORT'),
+                'MYSQLPORT' => env('MYSQLPORT'),
             ],
+            'is_config_cached' => app()->configurationIsCached(),
         ];
     } catch (\Exception $e) {
         return [
