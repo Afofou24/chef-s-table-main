@@ -11,14 +11,29 @@ Route::get('/health', function () {
 });
 
 Route::get('/debug', function () {
-    return [
-        'connection' => config('database.default'),
-        'mysql_config' => [
-            'host' => config('database.connections.mysql.host'),
-            'database' => config('database.connections.mysql.database'),
-            'username' => config('database.connections.mysql.username'),
-        ],
-        'env_db_host' => env('DB_HOST'),
-        'tables' => \Illuminate\Support\Facades\DB::connection()->select('SHOW TABLES'),
-    ];
+    try {
+        $connection = config('database.default');
+        $tables = [];
+        try {
+            $tables = \Illuminate\Support\Facades\DB::connection()->select('SHOW TABLES');
+        } catch (\Exception $e) {
+            $tables = "Error fetching tables: " . $e->getMessage();
+        }
+
+        return [
+            'status' => 'success',
+            'connection' => $connection,
+            'database_name' => config("database.connections.$connection.database"),
+            'env_db_connection' => env('DB_CONNECTION'),
+            'env_db_host' => env('DB_HOST'),
+            'tables' => $tables,
+            'php_version' => PHP_VERSION,
+        ];
+    } catch (\Exception $e) {
+        return [
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ];
+    }
 });
