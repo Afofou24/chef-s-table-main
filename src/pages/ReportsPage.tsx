@@ -19,7 +19,7 @@ export default function ReportsPage() {
   const { data: dailyResponse, isLoading: dailyLoading } = useQuery({
     queryKey: ['reports-daily-summary'],
     queryFn: async () => {
-      const { data } = await api.get('/payments/daily-summary', { params: { last_24h: 1 } });
+      const { data } = await api.get('payments/daily-summary', { params: { last_24h: 1 } });
       return data;
     }
   });
@@ -28,7 +28,7 @@ export default function ReportsPage() {
   const { data: categoryResponse, isLoading: categoryLoading } = useQuery({
     queryKey: ['reports-category-revenue'],
     queryFn: async () => {
-      const { data } = await api.get('/reports/revenue-by-category');
+      const { data } = await api.get('reports/revenue-by-category');
       return data;
     }
   });
@@ -37,7 +37,7 @@ export default function ReportsPage() {
   const { data: popularResponse, isLoading: itemsLoading } = useQuery({
     queryKey: ['reports-popular-items'],
     queryFn: async () => {
-      const { data } = await api.get('/reports/popular-items');
+      const { data } = await api.get('reports/popular-items');
       return data;
     }
   });
@@ -46,7 +46,7 @@ export default function ReportsPage() {
   const { data: weeklyResponse, isLoading: weeklyLoading } = useQuery({
     queryKey: ['reports-weekly-summary'],
     queryFn: async () => {
-      const { data } = await api.get('/payments/weekly-summary');
+      const { data } = await api.get('payments/weekly-summary');
       return data;
     }
   });

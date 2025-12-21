@@ -43,7 +43,7 @@ export default function PaymentsPage() {
   const { data: summary } = useQuery({
     queryKey: ['daily-summary-payments'],
     queryFn: async () => {
-      const { data } = await api.get('/payments/daily-summary', { params: { last_24h: 1 } });
+      const { data } = await api.get('payments/daily-summary', { params: { last_24h: 1 } });
       return data;
     }
   });
@@ -53,7 +53,7 @@ export default function PaymentsPage() {
     queryKey: ['payments-history', searchTerm],
     queryFn: async () => {
       const params = searchTerm ? { search: searchTerm } : {};
-      const { data } = await api.get('/payments', { params });
+      const { data } = await api.get('payments', { params });
       return data;
     }
   });
@@ -62,7 +62,7 @@ export default function PaymentsPage() {
   const { data: readyOrdersResponse, isLoading: readyLoading } = useQuery({
     queryKey: ['orders-to-pay', 'served'],
     queryFn: async () => {
-      const { data } = await api.get('/orders', { params: { status: 'served' } });
+      const { data } = await api.get('orders', { params: { status: 'served' } });
       return data;
     }
   });
@@ -73,7 +73,7 @@ export default function PaymentsPage() {
   // Process Payment Mutation
   const processPaymentMutation = useMutation({
     mutationFn: async (payload: any) => {
-      await api.post('/payments', payload);
+      await api.post('payments', payload);
     },
     onSuccess: () => {
       toast.success('Paiement enregistré avec succès');

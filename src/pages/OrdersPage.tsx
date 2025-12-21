@@ -90,7 +90,7 @@ export default function OrdersPage() {
     queryFn: async () => {
       const params: any = {};
       if (statusFilter !== 'all') params.status = statusFilter;
-      const { data } = await api.get('/orders', { params });
+      const { data } = await api.get('orders', { params });
       return data;
     },
   });
@@ -100,7 +100,7 @@ export default function OrdersPage() {
   const { data: tablesResponse } = useQuery({
     queryKey: ['tables'],
     queryFn: async () => {
-      const { data } = await api.get('/tables');
+      const { data } = await api.get('tables');
       return data;
     },
     enabled: isNewOrderOpen, // Only fetch when dialog opens
@@ -110,7 +110,7 @@ export default function OrdersPage() {
   const { data: categoriesResponse } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get('/categories');
+      const { data } = await api.get('categories');
       return data;
     },
     enabled: isNewOrderOpen,
@@ -120,7 +120,7 @@ export default function OrdersPage() {
   const { data: menuItemsResponse } = useQuery({
     queryKey: ['menu-items'],
     queryFn: async () => {
-      const { data } = await api.get('/menu-items', { params: { is_available: 1 } });
+      const { data } = await api.get('menu-items', { params: { is_available: 1 } });
       return data;
     },
     enabled: isNewOrderOpen,
@@ -131,7 +131,7 @@ export default function OrdersPage() {
 
   const createOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      await api.post('/orders', data);
+      await api.post('orders', data);
     },
     onSuccess: () => {
       toast.success('Commande créée avec succès');

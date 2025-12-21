@@ -14,7 +14,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const { data: groupedSettings, isLoading, refetch } = useQuery({
         queryKey: ['settings-global'],
         queryFn: async () => {
-            const { data } = await api.get('/settings/grouped');
+            const { data } = await api.get('settings/grouped');
             return data as Record<string, any[]>;
         },
         staleTime: 1000 * 60 * 5, // 5 minutes

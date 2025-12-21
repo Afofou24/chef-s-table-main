@@ -50,7 +50,7 @@ export default function TablesPage() {
   const { data: tablesResponse, isLoading } = useQuery({
     queryKey: ['tables'],
     queryFn: async () => {
-      const { data } = await api.get('/tables');
+      const { data } = await api.get('tables');
       return data;
     }
   });
@@ -60,7 +60,7 @@ export default function TablesPage() {
   // Create Table Mutation
   const createTableMutation = useMutation({
     mutationFn: async (data: any) => {
-      await api.post('/tables', data);
+      await api.post('tables', data);
     },
     onSuccess: () => {
       toast.success('Table créée avec succès');

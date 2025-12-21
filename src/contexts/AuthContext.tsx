@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const { data } = await api.get('/auth/user');
+        const { data } = await api.get('auth/user');
         setCurrentUser(data.data); // data.data because of JsonResource
       } catch (error) {
         console.error("Auth check failed", error);
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     // No csrf-cookie needed for Token Auth
-    const { data } = await api.post('/auth/login', { email, password });
+    const { data } = await api.post('auth/login', { email, password });
 
     // Store token
     localStorage.setItem('token', data.token);
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post('auth/logout');
     } catch (e) {
       console.error(e);
     } finally {

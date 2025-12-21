@@ -31,7 +31,7 @@ export default function KitchenPage() {
   const { data: kitchenItemsResponse, isLoading, isError } = useQuery({
     queryKey: ['kitchen-items'],
     queryFn: async () => {
-      const { data } = await api.get('/kitchen/items');
+      const { data } = await api.get('kitchen/items');
       return data;
     },
     refetchInterval: 10000,

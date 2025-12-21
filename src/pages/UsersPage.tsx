@@ -55,7 +55,7 @@ export default function UsersPage() {
   const { data: rolesResponse } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      const { data } = await api.get('/roles');
+      const { data } = await api.get('roles');
       return data;
     }
   });
@@ -67,7 +67,7 @@ export default function UsersPage() {
     queryFn: async () => {
       try {
         const params = searchTerm ? { search: searchTerm } : {};
-        const { data } = await api.get('/users', { params });
+        const { data } = await api.get('users', { params });
         return data;
       } catch (e) {
         console.error("Users fetch error:", e);
@@ -94,7 +94,7 @@ export default function UsersPage() {
         phone: newUser.phone,
         roles: [selectedRole.id] // Send as array of IDs
       };
-      await api.post('/users', payload);
+      await api.post('users', payload);
     },
     onSuccess: () => {
       toast.success('Utilisateur créé avec succès');

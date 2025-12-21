@@ -24,7 +24,7 @@ export default function DashboardPage() {
   const { data: dailyResponse, isLoading: statsLoading } = useQuery({
     queryKey: ['daily-summary'],
     queryFn: async () => {
-      const { data } = await api.get('/payments/daily-summary', { params: { last_24h: 1 } });
+      const { data } = await api.get('payments/daily-summary', { params: { last_24h: 1 } });
       return data;
     }
   });
@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const { data: weeklyResponse, isLoading: weeklyLoading } = useQuery({
     queryKey: ['weekly-summary'],
     queryFn: async () => {
-      const { data } = await api.get('/payments/weekly-summary');
+      const { data } = await api.get('payments/weekly-summary');
       return data;
     }
   });
@@ -41,7 +41,7 @@ export default function DashboardPage() {
   const { data: lowStockResponse, isLoading: stockLoading } = useQuery({
     queryKey: ['stock-low'],
     queryFn: async () => {
-      const { data } = await api.get('/stock/low'); // Note: Endpoint exists in Controller as lowStock()
+      const { data } = await api.get('stock/low'); // Note: Endpoint exists in Controller as lowStock()
       return data;
     }
   });
@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const { data: tablesResponse, isLoading: tablesLoading } = useQuery({
     queryKey: ['tables-dashboard'],
     queryFn: async () => {
-      const { data } = await api.get('/tables');
+      const { data } = await api.get('tables');
       return data;
     }
   });
@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const { data: ordersResponse, isLoading: ordersLoading } = useQuery({
     queryKey: ['recent-orders'],
     queryFn: async () => {
-      const { data } = await api.get('/orders', { params: { per_page: 5 } });
+      const { data } = await api.get('orders', { params: { per_page: 5 } });
       return data;
     }
   });

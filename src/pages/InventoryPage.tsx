@@ -44,7 +44,7 @@ export default function InventoryPage() {
     queryKey: ['stock', searchTerm],
     queryFn: async () => {
       const params = searchTerm ? { search: searchTerm } : {};
-      const { data } = await api.get('/stock', { params });
+      const { data } = await api.get('stock', { params });
       return data;
     }
   });
@@ -55,7 +55,7 @@ export default function InventoryPage() {
   // Create Stock Mutation
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      await api.post('/stock', data);
+      await api.post('stock', data);
     },
     onSuccess: () => {
       toast.success('Article ajouté au stock');

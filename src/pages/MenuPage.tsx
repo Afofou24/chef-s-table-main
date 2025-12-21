@@ -51,7 +51,7 @@ export default function MenuPage() {
   const { data: categoriesResponse } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get('/categories');
+      const { data } = await api.get('categories');
       return data;
     },
   });
@@ -63,7 +63,7 @@ export default function MenuPage() {
       const params: any = {};
       if (searchTerm) params.search = searchTerm;
       if (selectedCategory !== 'all') params.category_id = selectedCategory;
-      const { data } = await api.get('/menu-items', { params });
+      const { data } = await api.get('menu-items', { params });
       return data;
     },
   });
@@ -72,7 +72,7 @@ export default function MenuPage() {
   // Mutations
   const createMutation = useMutation({
     mutationFn: async (newItem: any) => {
-      await api.post('/menu-items', newItem);
+      await api.post('menu-items', newItem);
     },
     onSuccess: () => {
       toast.success('Plat créé avec succès');

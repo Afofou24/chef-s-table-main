@@ -36,7 +36,7 @@ export default function SettingsPage() {
   const { data: groupedSettings, isLoading } = useQuery({
     queryKey: ['settings-grouped'],
     queryFn: async () => {
-      const { data } = await api.get('/settings/grouped');
+      const { data } = await api.get('settings/grouped');
       return data as Record<string, Setting[]>;
     }
   });
@@ -55,7 +55,7 @@ export default function SettingsPage() {
   // Bulk Update Mutation
   const updateMutation = useMutation({
     mutationFn: async (settings: { key: string; value: string }[]) => {
-      await api.put('/settings/bulk', { settings });
+      await api.put('settings/bulk', { settings });
     },
     onSuccess: () => {
       toast.success('Paramètres enregistrés avec succès');
@@ -70,7 +70,7 @@ export default function SettingsPage() {
   // Password Change Mutation
   const changePasswordMutation = useMutation({
     mutationFn: async (data: typeof passwordForm) => {
-      await api.post('/auth/change-password', data);
+      await api.post('auth/change-password', data);
     },
     onSuccess: () => {
       toast.success('Mot de passe modifié avec succès');
@@ -85,7 +85,7 @@ export default function SettingsPage() {
   // Revoke Sessions Mutation
   const revokeSessionsMutation = useMutation({
     mutationFn: async () => {
-      await api.post('/auth/revoke-sessions');
+      await api.post('auth/revoke-sessions');
     },
     onSuccess: () => {
       toast.success('Toutes les sessions ont été révoquées');

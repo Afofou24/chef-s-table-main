@@ -26,7 +26,7 @@ export default function BackupPage() {
   const { data: backupsResponse, isLoading } = useQuery({
     queryKey: ['backups'],
     queryFn: async () => {
-      const { data } = await api.get('/backups');
+      const { data } = await api.get('backups');
       return data;
     }
   });
@@ -37,7 +37,7 @@ export default function BackupPage() {
   // Create Backup Mutation
   const createBackupMutation = useMutation({
     mutationFn: async () => {
-      await api.post('/backups', { notes: 'Sauvegarde manuelle' });
+      await api.post('backups', { notes: 'Sauvegarde manuelle' });
     },
     onSuccess: () => {
       toast.success('Sauvegarde créée avec succès');
