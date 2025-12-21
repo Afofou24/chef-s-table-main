@@ -19,7 +19,14 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8081', 'http://127.0.0.1:8081', 'http://127.0.0.1:5173'],
+    'allowed_origins' => [
+        'http://localhost:5173', 
+        'http://localhost:3000', 
+        'http://localhost:8081', 
+        'http://127.0.0.1:8081', 
+        'http://127.0.0.1:5173',
+        env('FRONTEND_URL', '*'), // Allow wildcard if no specific URL is provided
+    ],
 
     'allowed_origins_patterns' => [],
 
