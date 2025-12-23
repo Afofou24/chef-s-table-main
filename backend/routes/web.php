@@ -11,19 +11,25 @@ Route::get('/health', function () {
 });
 
 Route::get('/debug', function () {
-    if (request()->has('clear')) {
-        \Illuminate\Support\Facades\Artisan::call('config:clear');
-        \Illuminate\Support\Facades\Artisan::call('cache:clear');
-        return ['status' => 'success', 'message' => 'Cache cleared'];
-    }
-
-    if (request()->has('seed')) {
+    // Force clear cache if requested or if we are stuck in cache
+    $queryString = request()->getQueryString();
+    if (str_contains($queryString, 'init') || str_contains($queryString, 'clear')) {
         try {
             \Illuminate\Support\Facades\Artisan::call('config:clear');
             \Illuminate\Support\Facades\Artisan::call('cache:clear');
-            \Illuminate\Support\Facades\Artisan::call('migrate --force');
-            \Illuminate\Support\Facades\Artisan::call('db:seed --force');
-            return ['status' => 'success', 'message' => 'Cache cleared, database migrated and seeded successfully'];
+            \Illuminate\Support\Facades\Artisan::call('view:clear');
+            \Illuminate\Support\Facades\Artisan::call('route:clear');
+            
+            if (str_contains($queryString, 'init')) {
+                \Illuminate\Support\Facades\Artisan::call('migrate --force');
+                \Illuminate\Support\Facades\Artisan::call('db:seed --force');
+                return [
+                    'status' => 'success', 
+                    'message' => 'Cache cleared and Database initialized successfully!',
+                    'note' => 'If you still see 127.0.0.1 on the next page, your Railway variables are missing.'
+                ];
+            }
+            return ['status' => 'success', 'message' => 'All caches cleared'];
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
