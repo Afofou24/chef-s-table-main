@@ -88,7 +88,7 @@ class DatabaseSeeder extends Seeder
             ]);
             
             StockItem::factory()->count(10)->create([
-                'category_id' => $category->id
+                'category' => $category->name
             ]);
         }
 
