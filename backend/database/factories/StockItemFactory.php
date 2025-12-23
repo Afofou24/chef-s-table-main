@@ -13,7 +13,7 @@ class StockItemFactory extends Factory
     public function definition(): array
     {
         return [
-            'category_id' => Category::factory(),
+            'category' => Category::inRandomOrder()->first()?->name ?? $this->faker->word(),
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
             'quantity' => $this->faker->numberBetween(10, 100),
