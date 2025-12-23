@@ -22,11 +22,13 @@ Route::get('/debug', function () {
         $dbConfig = config("database.connections.$connection");
         
         $tables = [];
+        $userCount = 0;
         $dbError = null;
         try {
             // Check connection by running a simple query
             \Illuminate\Support\Facades\DB::connection()->getPdo();
             $tables = \Illuminate\Support\Facades\DB::connection()->select('SHOW TABLES');
+            $userCount = \Illuminate\Support\Facades\DB::table('users')->count();
         } catch (\Exception $e) {
             $dbError = $e->getMessage();
         }
@@ -41,6 +43,7 @@ Route::get('/debug', function () {
                 'username' => $dbConfig['username'] ?? 'N/A',
             ],
             'db_error' => $dbError,
+            'user_count' => $userCount,
             'tables' => $tables,
             'env_vars_check' => [
                 'DB_CONNECTION' => env('DB_CONNECTION'),
