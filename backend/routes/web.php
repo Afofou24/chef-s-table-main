@@ -19,9 +19,11 @@ Route::get('/debug', function () {
 
     if (request()->has('seed')) {
         try {
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            \Illuminate\Support\Facades\Artisan::call('cache:clear');
             \Illuminate\Support\Facades\Artisan::call('migrate --force');
             \Illuminate\Support\Facades\Artisan::call('db:seed --force');
-            return ['status' => 'success', 'message' => 'Database migrated and seeded successfully'];
+            return ['status' => 'success', 'message' => 'Cache cleared, database migrated and seeded successfully'];
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
@@ -55,13 +57,9 @@ Route::get('/debug', function () {
             'db_error' => $dbError,
             'user_count' => $userCount,
             'tables' => $tables,
-            'env_vars_check' => [
-                'DB_CONNECTION' => env('DB_CONNECTION'),
-                'DB_HOST' => env('DB_HOST'),
-                'MYSQLHOST' => env('MYSQLHOST'),
-                'DB_PORT' => env('DB_PORT'),
-                'MYSQLPORT' => env('MYSQLPORT'),
-            ],
+            'env_vars_found' => collect($_ENV)->keys()->filter(function($key) {
+                return str_contains($key, 'DB_') || str_contains($key, 'MYSQL');
+            })->values(),
             'is_config_cached' => app()->configurationIsCached(),
         ];
     } catch (\Exception $e) {
