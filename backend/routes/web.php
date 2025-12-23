@@ -37,8 +37,14 @@ Route::get('/debug', function () {
                 ];
             }
             return ['status' => 'success', 'message' => 'All caches aggressively cleared'];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => $e->getMessage()];
+        } catch (\Throwable $e) {
+            return [
+                'status' => 'error', 
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => substr($e->getTraceAsString(), 0, 500)
+            ];
         }
     }
 
