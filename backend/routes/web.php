@@ -54,18 +54,25 @@ Route::get('/debug', function () {
         return [
             'status' => $dbError ? 'partial_error' : 'success',
             'current_connection' => $connection,
-            'database_config' => [
+            'database_config_cached' => [
                 'host' => $dbConfig['host'] ?? 'N/A',
                 'port' => $dbConfig['port'] ?? 'N/A',
                 'database' => $dbConfig['database'] ?? 'N/A',
                 'username' => $dbConfig['username'] ?? 'N/A',
             ],
+            'raw_env_values' => [
+                'DB_HOST' => $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? 'NOT FOUND',
+                'MYSQLHOST' => $_ENV['MYSQLHOST'] ?? $_SERVER['MYSQLHOST'] ?? 'NOT FOUND',
+                'DB_PORT' => $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? 'NOT FOUND',
+                'MYSQLPORT' => $_ENV['MYSQLPORT'] ?? $_SERVER['MYSQLPORT'] ?? 'NOT FOUND',
+            ],
             'db_error' => $dbError,
             'user_count' => $userCount,
             'tables' => $tables,
-            'env_vars_found' => collect($_ENV)->keys()->filter(function($key) {
-                return str_contains($key, 'DB_') || str_contains($key, 'MYSQL');
-            })->values(),
+            'all_env_keys' => collect(array_merge(array_keys($_ENV), array_keys($_SERVER)))
+                ->filter(fn($k) => str_contains($k, 'DB_') || str_contains($k, 'MYSQL'))
+                ->unique()
+                ->values(),
             'is_config_cached' => app()->configurationIsCached(),
         ];
     } catch (\Exception $e) {
