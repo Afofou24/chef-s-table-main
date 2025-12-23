@@ -70,5 +70,66 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
         $cashierUser->roles()->attach(Role::where('code', 'cashier')->first());
+
+        // 6. Generate Realistic Data
+        // Categories and Menu Items
+        $categories = Category::factory()->count(5)->create();
+        foreach ($categories as $category) {
+            MenuItem::factory()->count(8)->create([
+                'category_id' => $category->id
+            ]);
+            
+            StockItem::factory()->count(10)->create([
+                'category_id' => $category->id
+            ]);
+        }
+
+        // Tables
+        $tables = RestaurantTable::factory()->count(15)->create();
+
+        // Orders and Payments
+        $waiters = User::role('waiter')->get();
+        if ($waiters->isEmpty()) $waiters = User::all();
+        
+        $cashiers = User::role('cashier')->get();
+        if ($cashiers->isEmpty()) $cashiers = User::all();
+
+        foreach ($tables as $table) {
+            // Create some past orders for each table
+            Order::factory()->count(3)->create([
+                'table_id' => $table->id,
+                'status' => 'paid',
+                'waiter_id' => $waiters->random()->id
+            ])->each(function ($order) use ($cashiers) {
+                $items = MenuItem::all()->random(rand(2, 5));
+                $total = 0;
+                foreach ($items as $menuItem) {
+                    $qty = rand(1, 3);
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'menu_item_id' => $menuItem->id,
+                        'quantity' => $qty,
+                        'unit_price' => $menuItem->price,
+                        'status' => 'served'
+                    ]);
+                    $total += ($menuItem->price * $qty);
+                }
+                
+                $order->subtotal = $total;
+                $order->tax_amount = $total * 0.10;
+                $order->total_amount = $total + $order->tax_amount;
+                $order->save();
+
+                Payment::factory()->create([
+                    'order_id' => $order->id,
+                    'amount' => $order->total_amount,
+                    'cashier_id' => $cashiers->random()->id,
+                    'status' => 'completed'
+                ]);
+            });
+        }
+
+        // Create some reservations
+        Reservation::factory()->count(10)->create();
     }
 }
