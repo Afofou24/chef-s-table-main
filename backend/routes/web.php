@@ -17,6 +17,16 @@ Route::get('/debug', function () {
         return ['status' => 'success', 'message' => 'Cache cleared'];
     }
 
+    if (request()->has('seed')) {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate --force');
+            \Illuminate\Support\Facades\Artisan::call('db:seed --force');
+            return ['status' => 'success', 'message' => 'Database migrated and seeded successfully'];
+        } catch (\Exception $e) {
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
     try {
         $connection = config('database.default');
         $dbConfig = config("database.connections.$connection");
