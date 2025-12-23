@@ -15,21 +15,28 @@ Route::get('/debug', function () {
     $queryString = request()->getQueryString();
     if (str_contains($queryString, 'init') || str_contains($queryString, 'clear')) {
         try {
+            // Aggressive clearing
             \Illuminate\Support\Facades\Artisan::call('config:clear');
             \Illuminate\Support\Facades\Artisan::call('cache:clear');
             \Illuminate\Support\Facades\Artisan::call('view:clear');
             \Illuminate\Support\Facades\Artisan::call('route:clear');
             
+            // Manual file deletion if Artisan fails in some environments
+            $configCache = base_path('bootstrap/cache/config.php');
+            if (file_exists($configCache)) {
+                @unlink($configCache);
+            }
+
             if (str_contains($queryString, 'init')) {
                 \Illuminate\Support\Facades\Artisan::call('migrate --force');
                 \Illuminate\Support\Facades\Artisan::call('db:seed --force');
                 return [
                     'status' => 'success', 
-                    'message' => 'Cache cleared and Database initialized successfully!',
-                    'note' => 'If you still see 127.0.0.1 on the next page, your Railway variables are missing.'
+                    'message' => 'AGGRESSIVE CLEAR DONE. Database initialized.',
+                    'config_cache_file_exists' => file_exists($configCache)
                 ];
             }
-            return ['status' => 'success', 'message' => 'All caches cleared'];
+            return ['status' => 'success', 'message' => 'All caches aggressively cleared'];
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
@@ -53,24 +60,22 @@ Route::get('/debug', function () {
 
         return [
             'status' => $dbError ? 'partial_error' : 'success',
-            'app_key_set' => !empty(config('app.key')),
+            'keys_check' => [
+                'config_app_key_snippet' => substr(config('app.key'), 0, 15) . '...',
+                'env_app_key_snippet' => substr(getenv('APP_KEY'), 0, 15) . '...',
+            ],
             'current_connection' => $connection,
             'user_count' => $userCount,
             'user_emails' => \Illuminate\Support\Facades\DB::table('users')->pluck('email'),
-            'database_config_cached' => [
-                'host' => $dbConfig['host'] ?? 'N/A',
-                'database' => $dbConfig['database'] ?? 'N/A',
-                'username' => $dbConfig['username'] ?? 'N/A',
+            'database_config_active' => [
+                'host' => config('database.connections.mysql.host'),
+                'database' => config('database.connections.mysql.database'),
             ],
             'raw_env_values' => [
-                'DB_HOST' => $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? 'NOT FOUND',
-                'DB_URL' => isset($_ENV['DB_URL']) ? 'PROTECTED (SET)' : 'NOT FOUND',
+                'DB_HOST' => getenv('DB_HOST') ?: 'NOT FOUND',
+                'MYSQLHOST' => getenv('MYSQLHOST') ?: 'NOT FOUND',
+                'DB_URL_SET' => !empty(getenv('DB_URL')),
             ],
-            'db_error' => $dbError,
-            'all_env_keys' => collect(array_merge(array_keys($_ENV), array_keys($_SERVER)))
-                ->filter(fn($k) => str_contains($k, 'DB_') || str_contains($k, 'MYSQL') || str_contains($k, 'APP_'))
-                ->unique()
-                ->values(),
             'is_config_cached' => app()->configurationIsCached(),
         ];
     } catch (\Exception $e) {
