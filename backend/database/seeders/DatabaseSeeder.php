@@ -110,7 +110,7 @@ class DatabaseSeeder extends Seeder
             // Create some past orders for each table
             Order::factory()->count(3)->create([
                 'table_id' => $table->id,
-                'status' => 'paid',
+                'status' => 'completed',
                 'waiter_id' => $waiters->random()->id
             ])->each(function ($order) use ($cashiers) {
                 $items = MenuItem::all()->random(rand(2, 5));
