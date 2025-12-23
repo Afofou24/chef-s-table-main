@@ -12,7 +12,7 @@ Route::get('/health', function () {
 
 Route::get('/debug', function () {
     // Force clear cache if requested or if we are stuck in cache
-    $queryString = request()->getQueryString();
+    $queryString = (string)request()->getQueryString();
     if (str_contains($queryString, 'init') || str_contains($queryString, 'clear')) {
         try {
             // Aggressive clearing
