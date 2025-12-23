@@ -96,10 +96,14 @@ class DatabaseSeeder extends Seeder
         $tables = RestaurantTable::factory()->count(15)->create();
 
         // Orders and Payments
-        $waiters = User::role('waiter')->get();
+        $waiters = User::whereHas('roles', function ($q) {
+            $q->where('code', 'waiter');
+        })->get();
         if ($waiters->isEmpty()) $waiters = User::all();
         
-        $cashiers = User::role('cashier')->get();
+        $cashiers = User::whereHas('roles', function ($q) {
+            $q->where('code', 'cashier');
+        })->get();
         if ($cashiers->isEmpty()) $cashiers = User::all();
 
         foreach ($tables as $table) {
