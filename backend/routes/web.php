@@ -28,7 +28,7 @@ Route::get('/debug', function () {
             }
 
             if (str_contains($queryString, 'init')) {
-                \Illuminate\Support\Facades\Artisan::call('migrate --force');
+                \Illuminate\Support\Facades\Artisan::call('migrate:fresh --force');
                 \Illuminate\Support\Facades\Artisan::call('db:seed --force');
                 return [
                     'status' => 'success', 
