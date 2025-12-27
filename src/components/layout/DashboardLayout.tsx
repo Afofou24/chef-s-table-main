@@ -21,9 +21,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
-      <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
+      <div className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b bg-background px-4 md:hidden shadow-sm">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="relative z-50">
             <Menu className="h-6 w-6" />
           </Button>
           <span className="font-display text-lg font-semibold">RestoManager</span>

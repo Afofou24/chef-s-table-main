@@ -56,16 +56,13 @@ class BackupController extends Controller
 
         try {
             // PHP-native backup implementation (works without mysqldump binary)
-            $dbHost = config('database.connections.mysql.host');
-            $dbName = config('database.connections.mysql.database');
-            $dbUser = config('database.connections.mysql.username');
-            $dbPass = config('database.connections.mysql.password');
-            $dbPort = config('database.connections.mysql.port', 3306);
-            
-            // Handle localhost special case for DSN
-            if ($dbHost === '127.0.0.1') {
-                $dbHost = '127.0.0.1';
-            }
+            // PHP-native backup implementation
+            // Force use of env variables to bypass potential caching/config mismatches
+            $dbHost = env('MYSQLHOST', env('DB_HOST', '127.0.0.1'));
+            $dbName = env('MYSQLDATABASE', env('DB_DATABASE', 'laravel'));
+            $dbUser = env('MYSQLUSER', env('DB_USERNAME', 'root'));
+            $dbPass = env('MYSQLPASSWORD', env('DB_PASSWORD', ''));
+            $dbPort = env('MYSQLPORT', env('DB_PORT', 3306));
 
             Storage::disk('local')->makeDirectory('backups');
             $absolutePath = Storage::disk('local')->path($path);
@@ -95,11 +92,11 @@ class BackupController extends Controller
                 $dbPass,
                 $dumpSettings
             );
-            
+
             $dumper->start($absolutePath);
-            
+
             if (!file_exists($absolutePath) || filesize($absolutePath) === 0) {
-                 throw new \Exception("Backup file was not created or is empty.");
+                throw new \Exception("Backup file was not created or is empty.");
             }
 
             $backup->update([
@@ -174,7 +171,8 @@ class BackupController extends Controller
         // Real restore implementation using mysql binary and Symfony Process
         $mysqlPath = config('backup.mysql_path');
         $dbHost = config('database.connections.mysql.host');
-        if ($dbHost === '127.0.0.1') $dbHost = 'localhost';
+        if ($dbHost === '127.0.0.1')
+            $dbHost = 'localhost';
         $dbName = config('database.connections.mysql.database');
         $dbUser = config('database.connections.mysql.username');
         $dbPass = config('database.connections.mysql.password');
@@ -186,9 +184,9 @@ class BackupController extends Controller
             'TMP' => getenv('TMP'),
             'PATH' => getenv('PATH'),
         ]);
-        
+
         $absolutePath = Storage::disk('local')->path($backup->path);
-        
+
         // Build command
         $command = [
             $mysqlPath,
