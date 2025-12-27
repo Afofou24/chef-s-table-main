@@ -55,43 +55,53 @@ class BackupController extends Controller
         ]);
 
         try {
-            // Real backup implementation using mysqldump and Symfony Process
-            $mysqldumpPath = config('backup.mysqldump_path');
+            // PHP-native backup implementation (works without mysqldump binary)
             $dbHost = config('database.connections.mysql.host');
-            if ($dbHost === '127.0.0.1') $dbHost = 'localhost';
             $dbName = config('database.connections.mysql.database');
             $dbUser = config('database.connections.mysql.username');
             $dbPass = config('database.connections.mysql.password');
+            $dbPort = config('database.connections.mysql.port', 3306);
             
-            // Critical Windows Environment Variables for networking (WSAEPROVIDERFAILEDINIT fix)
-            $env = array_merge($_SERVER, [
-                'SystemRoot' => getenv('SystemRoot') ?: 'C:\Windows',
-                'SystemDrive' => getenv('SystemDrive') ?: 'C:',
-                'TEMP' => getenv('TEMP'),
-                'TMP' => getenv('TMP'),
-                'PATH' => getenv('PATH'),
-            ]);
-            
+            // Handle localhost special case for DSN
+            if ($dbHost === '127.0.0.1') {
+                $dbHost = '127.0.0.1';
+            }
+
             Storage::disk('local')->makeDirectory('backups');
             $absolutePath = Storage::disk('local')->path($path);
-            
-            // Build command as array (Symfony Process handles escaping)
-            $command = [
-                $mysqldumpPath,
-                '--user=' . $dbUser,
-                '--password=' . $dbPass,
-                '--host=' . $dbHost,
-                '--result-file=' . $absolutePath,
-                $dbName
+
+            $dumpSettings = [
+                'compress' => 'None',
+                'no-data' => false,
+                'add-drop-table' => true,
+                'single-transaction' => true,
+                'lock-tables' => false,
+                'add-locks' => true,
+                'extended-insert' => true,
+                'disable-keys' => true,
+                'skip-triggers' => false,
+                'add-drop-trigger' => true,
+                'routines' => true,
+                'databases' => false,
+                'add-drop-database' => false,
+                'hex-blob' => true,
+                'no-create-info' => false,
+                'where' => ''
             ];
 
-            $process = new Process($command, null, $env);
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                throw new \Exception("mysqldump failed (code " . $process->getExitCode() . "): " . $process->getErrorOutput());
-            }
+            $dumper = new \Ifsnop\Mysqldump\Mysqldump(
+                "mysql:host={$dbHost};port={$dbPort};dbname={$dbName}",
+                $dbUser,
+                $dbPass,
+                $dumpSettings
+            );
             
+            $dumper->start($absolutePath);
+            
+            if (!file_exists($absolutePath) || filesize($absolutePath) === 0) {
+                 throw new \Exception("Backup file was not created or is empty.");
+            }
+
             $backup->update([
                 'status' => 'completed',
                 'size' => Storage::disk('local')->size($path),
@@ -101,8 +111,11 @@ class BackupController extends Controller
                 'message' => 'Sauvegarde créée avec succès.',
                 'data' => $backup->fresh('createdBy:id,first_name,last_name'),
             ], 201);
+
         } catch (\Exception $e) {
             $backup->update(['status' => 'failed']);
+            \Illuminate\Support\Facades\Log::error('Backup failed: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error($e->getTraceAsString());
 
             return response()->json([
                 'message' => 'Erreur lors de la création de la sauvegarde.',

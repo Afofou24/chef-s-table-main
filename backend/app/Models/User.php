@@ -120,4 +120,14 @@ class User extends Authenticatable
     {
         return $query->where('is_active', true);
     }
+
+    /**
+     * Scope for users with specific role
+     */
+    public function scopeRole($query, string $roleCode)
+    {
+        return $query->whereHas('roles', function ($q) use ($roleCode) {
+            $q->where('code', $roleCode);
+        });
+    }
 }

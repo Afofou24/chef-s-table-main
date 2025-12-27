@@ -47,7 +47,12 @@ const navItems: NavItem[] = [
   { icon: Settings, label: 'Paramètres', path: '/settings', roles: ['admin'] },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  className?: string;
+  onNavClick?: () => void;
+}
+
+export function AppSidebar({ className, onNavClick }: AppSidebarProps) {
   const { currentUser, logout } = useAuth();
   const location = useLocation();
 
@@ -63,7 +68,7 @@ export function AppSidebar() {
   });
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border">
+    <aside className={cn("fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border bg-background", className)}>
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-6">
@@ -100,6 +105,7 @@ export function AppSidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={onNavClick}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive

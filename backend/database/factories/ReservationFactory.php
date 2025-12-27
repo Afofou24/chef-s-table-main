@@ -18,7 +18,8 @@ class ReservationFactory extends Factory
             'customer_email' => $this->faker->safeEmail(),
             'customer_phone' => $this->faker->phoneNumber(),
             'guests_count' => $this->faker->numberBetween(1, 8),
-            'reservation_datetime' => $this->faker->dateTimeBetween('now', '+1 month'),
+            'reservation_date' => $this->faker->dateTimeBetween('now', '+1 month')->format('Y-m-d'),
+            'reservation_time' => $this->faker->time('H:i:00'),
             'status' => $this->faker->randomElement(['pending', 'confirmed', 'cancelled', 'completed']),
             'notes' => $this->faker->sentence(),
         ];
