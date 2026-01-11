@@ -1,0 +1,300 @@
+@startuml Diagramme de Cas d'Utilisation - Chef's Table
+
+skinparam usecase {
+    BackgroundColor #E1F5FF
+    BorderColor #0066CC
+}
+
+skinparam actor {
+    BackgroundColor #FFE1E1
+    BorderColor #CC0000
+}
+
+skinparam package {
+    BackgroundColor #F0F0F0
+    BorderColor #666666
+}
+
+left to right direction
+
+' ============================================
+' ACTEURS
+' ============================================
+
+actor "Administrateur" as Admin
+actor "Gérant" as Manager
+actor "Caissier" as Cashier
+actor "Serveur" as Waiter
+actor "Cuisinier" as Cook
+actor "Client" as Customer
+
+' ============================================
+' PACKAGE: Authentification et Gestion des Utilisateurs
+' ============================================
+
+package "Authentification et Gestion des Utilisateurs" {
+    usecase "Se connecter" as UC_Login
+    usecase "Se déconnecter" as UC_Logout
+    usecase "Changer le mot de passe" as UC_ChangePassword
+    usecase "Gérer les utilisateurs" as UC_ManageUsers
+    usecase "Activer/Désactiver un utilisateur" as UC_ToggleUserStatus
+    usecase "Gérer les rôles" as UC_ManageRoles
+    usecase "Consulter les logs d'activité" as UC_ViewActivityLogs
+}
+
+Admin --> UC_Login
+Admin --> UC_Logout
+Admin --> UC_ChangePassword
+Admin --> UC_ManageUsers
+Admin --> UC_ToggleUserStatus
+Admin --> UC_ManageRoles
+Admin --> UC_ViewActivityLogs
+
+Manager --> UC_Login
+Manager --> UC_Logout
+Manager --> UC_ChangePassword
+
+Cashier --> UC_Login
+Cashier --> UC_Logout
+Cashier --> UC_ChangePassword
+
+Waiter --> UC_Login
+Waiter --> UC_Logout
+Waiter --> UC_ChangePassword
+
+Cook --> UC_Login
+Cook --> UC_Logout
+Cook --> UC_ChangePassword
+
+' ============================================
+' PACKAGE: Gestion du Menu
+' ============================================
+
+package "Gestion du Menu" {
+    usecase "Gérer les catégories" as UC_ManageCategories
+    usecase "Réorganiser les catégories" as UC_ReorderCategories
+    usecase "Gérer les plats du menu" as UC_ManageMenuItems
+    usecase "Activer/Désactiver un plat" as UC_ToggleMenuItemAvailability
+    usecase "Mettre en vedette un plat" as UC_ToggleMenuItemFeatured
+    usecase "Consulter le menu" as UC_ViewMenu
+}
+
+Admin --> UC_ManageCategories
+Admin --> UC_ReorderCategories
+Admin --> UC_ManageMenuItems
+Admin --> UC_ToggleMenuItemAvailability
+Admin --> UC_ToggleMenuItemFeatured
+
+Manager --> UC_ManageCategories
+Manager --> UC_ReorderCategories
+Manager --> UC_ManageMenuItems
+Manager --> UC_ToggleMenuItemAvailability
+Manager --> UC_ToggleMenuItemFeatured
+
+Waiter --> UC_ViewMenu
+Customer --> UC_ViewMenu
+
+' ============================================
+' PACKAGE: Gestion des Tables
+' ============================================
+
+package "Gestion des Tables" {
+    usecase "Gérer les tables" as UC_ManageTables
+    usecase "Consulter les tables disponibles" as UC_ViewAvailableTables
+    usecase "Mettre à jour le statut d'une table" as UC_UpdateTableStatus
+    usecase "Gérer les réservations" as UC_ManageReservations
+    usecase "Consulter les réservations du jour" as UC_ViewTodayReservations
+    usecase "Confirmer une réservation" as UC_ConfirmReservation
+    usecase "Annuler une réservation" as UC_CancelReservation
+    usecase "Faire une réservation" as UC_MakeReservation
+}
+
+Admin --> UC_ManageTables
+Admin --> UC_ViewAvailableTables
+Admin --> UC_UpdateTableStatus
+Admin --> UC_ManageReservations
+Admin --> UC_ViewTodayReservations
+Admin --> UC_ConfirmReservation
+Admin --> UC_CancelReservation
+
+Manager --> UC_ManageTables
+Manager --> UC_ViewAvailableTables
+Manager --> UC_UpdateTableStatus
+Manager --> UC_ManageReservations
+Manager --> UC_ViewTodayReservations
+Manager --> UC_ConfirmReservation
+Manager --> UC_CancelReservation
+
+Waiter --> UC_ViewAvailableTables
+Waiter --> UC_UpdateTableStatus
+Waiter --> UC_ManageReservations
+Waiter --> UC_ViewTodayReservations
+Waiter --> UC_ConfirmReservation
+Waiter --> UC_CancelReservation
+
+Customer --> UC_MakeReservation
+
+' ============================================
+' PACKAGE: Gestion des Commandes
+' ============================================
+
+package "Gestion des Commandes" {
+    usecase "Créer une commande" as UC_CreateOrder
+    usecase "Consulter les commandes" as UC_ViewOrders
+    usecase "Ajouter des articles à une commande" as UC_AddOrderItems
+    usecase "Mettre à jour le statut d'une commande" as UC_UpdateOrderStatus
+    usecase "Consulter les commandes en cuisine" as UC_ViewKitchenOrders
+    usecase "Mettre à jour le statut d'un article" as UC_UpdateOrderItemStatus
+    usecase "Annuler une commande" as UC_CancelOrder
+}
+
+Admin --> UC_CreateOrder
+Admin --> UC_ViewOrders
+Admin --> UC_AddOrderItems
+Admin --> UC_UpdateOrderStatus
+Admin --> UC_UpdateOrderItemStatus
+Admin --> UC_CancelOrder
+
+Manager --> UC_CreateOrder
+Manager --> UC_ViewOrders
+Manager --> UC_AddOrderItems
+Manager --> UC_UpdateOrderStatus
+Manager --> UC_UpdateOrderItemStatus
+Manager --> UC_CancelOrder
+
+Waiter --> UC_CreateOrder
+Waiter --> UC_ViewOrders
+Waiter --> UC_AddOrderItems
+Waiter --> UC_UpdateOrderStatus
+
+Cashier --> UC_ViewOrders
+Cashier --> UC_UpdateOrderStatus
+
+Cook --> UC_ViewKitchenOrders
+Cook --> UC_UpdateOrderItemStatus
+
+' ============================================
+' PACKAGE: Gestion des Paiements
+' ============================================
+
+package "Gestion des Paiements" {
+    usecase "Encaisser un paiement" as UC_ProcessPayment
+    usecase "Consulter les paiements" as UC_ViewPayments
+    usecase "Consulter le résumé quotidien des paiements" as UC_ViewDailyPaymentSummary
+    usecase "Rembourser un paiement" as UC_RefundPayment
+    usecase "Consulter l'historique des paiements" as UC_ViewPaymentHistory
+}
+
+Admin --> UC_ProcessPayment
+Admin --> UC_ViewPayments
+Admin --> UC_ViewDailyPaymentSummary
+Admin --> UC_RefundPayment
+Admin --> UC_ViewPaymentHistory
+
+Manager --> UC_ViewPayments
+Manager --> UC_ViewDailyPaymentSummary
+Manager --> UC_ViewPaymentHistory
+
+Cashier --> UC_ProcessPayment
+Cashier --> UC_ViewPayments
+Cashier --> UC_ViewDailyPaymentSummary
+Cashier --> UC_RefundPayment
+Cashier --> UC_ViewPaymentHistory
+
+' ============================================
+' PACKAGE: Gestion des Stocks
+' ============================================
+
+package "Gestion des Stocks" {
+    usecase "Gérer les articles de stock" as UC_ManageStockItems
+    usecase "Consulter les stocks faibles" as UC_ViewLowStock
+    usecase "Consulter les articles expirant bientôt" as UC_ViewExpiringItems
+    usecase "Ajuster la quantité d'un article" as UC_AdjustStockQuantity
+    usecase "Enregistrer une entrée de stock" as UC_RecordStockIn
+    usecase "Enregistrer une sortie de stock" as UC_RecordStockOut
+    usecase "Consulter les mouvements de stock" as UC_ViewStockMovements
+}
+
+Admin --> UC_ManageStockItems
+Admin --> UC_ViewLowStock
+Admin --> UC_ViewExpiringItems
+Admin --> UC_AdjustStockQuantity
+Admin --> UC_RecordStockIn
+Admin --> UC_RecordStockOut
+Admin --> UC_ViewStockMovements
+
+Manager --> UC_ManageStockItems
+Manager --> UC_ViewLowStock
+Manager --> UC_ViewExpiringItems
+Manager --> UC_AdjustStockQuantity
+Manager --> UC_RecordStockIn
+Manager --> UC_RecordStockOut
+Manager --> UC_ViewStockMovements
+
+' ============================================
+' PACKAGE: Rapports et Statistiques
+' ============================================
+
+package "Rapports et Statistiques" {
+    usecase "Consulter le tableau de bord" as UC_ViewDashboard
+    usecase "Générer des rapports de ventes" as UC_GenerateSalesReports
+    usecase "Générer des rapports de stocks" as UC_GenerateStockReports
+    usecase "Consulter les statistiques" as UC_ViewStatistics
+}
+
+Admin --> UC_ViewDashboard
+Admin --> UC_GenerateSalesReports
+Admin --> UC_GenerateStockReports
+Admin --> UC_ViewStatistics
+
+Manager --> UC_ViewDashboard
+Manager --> UC_GenerateSalesReports
+Manager --> UC_GenerateStockReports
+Manager --> UC_ViewStatistics
+
+Cashier --> UC_ViewDashboard
+
+Waiter --> UC_ViewDashboard
+
+Cook --> UC_ViewDashboard
+
+' ============================================
+' PACKAGE: Paramètres et Maintenance
+' ============================================
+
+package "Paramètres et Maintenance" {
+    usecase "Gérer les paramètres système" as UC_ManageSettings
+    usecase "Mettre à jour les paramètres en masse" as UC_BulkUpdateSettings
+    usecase "Créer une sauvegarde" as UC_CreateBackup
+    usecase "Consulter les sauvegardes" as UC_ViewBackups
+    usecase "Télécharger une sauvegarde" as UC_DownloadBackup
+    usecase "Restaurer une sauvegarde" as UC_RestoreBackup
+    usecase "Nettoyer les anciennes sauvegardes" as UC_CleanOldBackups
+    usecase "Nettoyer les anciens logs" as UC_CleanOldLogs
+}
+
+Admin --> UC_ManageSettings
+Admin --> UC_BulkUpdateSettings
+Admin --> UC_CreateBackup
+Admin --> UC_ViewBackups
+Admin --> UC_DownloadBackup
+Admin --> UC_RestoreBackup
+Admin --> UC_CleanOldBackups
+Admin --> UC_CleanOldLogs
+
+' ============================================
+' RELATIONS D'INCLUSION ET D'EXTENSION
+' ============================================
+
+UC_ProcessPayment ..> UC_ViewOrders : <<include>>
+UC_CreateOrder ..> UC_ViewAvailableTables : <<include>>
+UC_AddOrderItems ..> UC_ViewMenu : <<include>>
+UC_UpdateOrderItemStatus ..> UC_ViewKitchenOrders : <<include>>
+UC_ManageReservations ..> UC_ViewAvailableTables : <<include>>
+UC_ViewDashboard ..> UC_ViewStatistics : <<include>>
+
+UC_CancelOrder ..> UC_UpdateOrderStatus : <<extend>>
+UC_RefundPayment ..> UC_ProcessPayment : <<extend>>
+
+@enduml
+

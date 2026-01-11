@@ -1,0 +1,314 @@
+@startuml Diagramme de Classes - Chef's Table
+
+!define ENTITY_COLOR #E1F5FF
+!define RELATION_COLOR #000000
+
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #0066CC
+    ArrowColor RELATION_COLOR
+}
+
+skinparam linetype ortho
+
+' ============================================
+' ENTITÉS PRINCIPALES
+' ============================================
+
+class User {
+    -id: bigint
+    -username: string
+    -first_name: string
+    -last_name: string
+    -email: string
+    -password: string
+    -phone: string
+    -avatar: string
+    -is_active: boolean
+    -last_login_at: datetime
+    --
+    +hasRole(roleCode: string): boolean
+    +hasAnyRole(roleCodes: array): boolean
+    +getFullNameAttribute(): string
+    +scopeActive()
+    +scopeRole(roleCode: string)
+}
+
+class Role {
+    -id: int
+    -name: string
+    -code: string
+    -description: string
+    --
+    +scopeByCode(code: string)
+}
+
+class Category {
+    -id: int
+    -name: string
+    -description: text
+    -image: string
+    -sort_order: int
+    -is_active: boolean
+    --
+    +scopeActive()
+    +scopeOrdered()
+}
+
+class MenuItem {
+    -id: bigint
+    -category_id: int
+    -name: string
+    -description: text
+    -price: decimal
+    -image: string
+    -preparation_time: int
+    -is_available: boolean
+    -is_featured: boolean
+    -allergens: string
+    -calories: int
+    --
+    +scopeAvailable()
+    +scopeFeatured()
+    +getFormattedPriceAttribute(): string
+}
+
+class RestaurantTable {
+    -id: bigint
+    -number: string
+    -capacity: int
+    -location: string
+    -status: string
+    -notes: text
+    --
+    +currentOrder()
+    +scopeAvailable()
+    +isAvailable(): boolean
+}
+
+class Order {
+    -id: bigint
+    -order_number: string
+    -table_id: bigint
+    -waiter_id: bigint
+    -status: string
+    -order_type: string
+    -subtotal: decimal
+    -tax_amount: decimal
+    -discount_amount: decimal
+    -total_amount: decimal
+    -notes: text
+    -guests_count: int
+    --
+    +calculateTotals(): void
+    +scopeByStatus(status: string)
+    +scopeForKitchen()
+    +scopeForCashier()
+    +isPaid(): boolean
+    +getFormattedTotalAttribute(): string
+}
+
+class OrderItem {
+    -id: bigint
+    -order_id: bigint
+    -menu_item_id: bigint
+    -quantity: int
+    -unit_price: decimal
+    -notes: text
+    -status: string
+    --
+    +getTotalAttribute(): float
+    +getFormattedTotalAttribute(): string
+    +scopeByStatus(status: string)
+}
+
+class Payment {
+    -id: bigint
+    -payment_number: string
+    -order_id: bigint
+    -cashier_id: bigint
+    -amount: decimal
+    -payment_method: string
+    -status: string
+    -transaction_reference: string
+    -notes: text
+    --
+    +scopeByStatus(status: string)
+    +scopeCompleted()
+    +scopeToday()
+    +getFormattedAmountAttribute(): string
+    +getMethodLabelAttribute(): string
+}
+
+class Reservation {
+    -id: bigint
+    -table_id: bigint
+    -customer_name: string
+    -customer_phone: string
+    -customer_email: string
+    -guests_count: int
+    -reservation_date: date
+    -reservation_time: string
+    -duration: int
+    -status: string
+    -notes: text
+    --
+    +scopeToday()
+    +scopeUpcoming()
+    +scopeByStatus(status: string)
+    +canBeCancelled(): boolean
+    +getStatusLabelAttribute(): string
+    +getFormattedDateTimeAttribute(): string
+}
+
+class StockItem {
+    -id: bigint
+    -name: string
+    -description: text
+    -category: string
+    -quantity: decimal
+    -unit: string
+    -minimum_quantity: decimal
+    -cost_per_unit: decimal
+    -supplier: string
+    -last_restocked_at: datetime
+    --
+    +isLowStock(): boolean
+    +scopeLowStock()
+    +scopeByCategory(category: string)
+    +addStock(quantity: float, userId: int, notes: string): StockMovement
+    +removeStock(quantity: float, userId: int, notes: string): StockMovement
+    +getTotalValueAttribute(): float
+}
+
+class StockMovement {
+    -id: bigint
+    -stock_item_id: bigint
+    -type: string
+    -quantity: decimal
+    -unit_cost: decimal
+    -total_cost: decimal
+    -user_id: bigint
+    -notes: text
+    --
+    +scopeByType(type: string)
+    +getTypeLabelAttribute(): string
+}
+
+class Setting {
+    -id: bigint
+    -key: string
+    -value: string
+    -type: string
+    -group: string
+    -description: text
+    --
+    +getValue(key: string, default: any): any
+    +setValue(key: string, value: any, type: string, group: string): Setting
+    +getCastedValue(): any
+    +scopeByGroup(group: string)
+    +getAllAsArray(): array
+}
+
+class Backup {
+    -id: bigint
+    -filename: string
+    -filepath: string
+    -size: int
+    -type: string
+    -status: string
+    -created_by: bigint
+    -notes: text
+    -completed_at: datetime
+    --
+    +scopeCompleted()
+    +getFormattedSizeAttribute(): string
+    +getTypeLabelAttribute(): string
+    +getStatusLabelAttribute(): string
+}
+
+class ActivityLog {
+    -id: bigint
+    -user_id: bigint
+    -action: string
+    -entity_type: string
+    -entity_id: bigint
+    -old_values: json
+    -new_values: json
+    -ip_address: string
+    -user_agent: string
+    -created_at: datetime
+    --
+    +log(action: string, entityType: string, entityId: int, oldValues: array, newValues: array): ActivityLog
+    +scopeByUser(userId: int)
+    +scopeByAction(action: string)
+    +scopeForEntity(type: string, id: int)
+    +getActionLabelAttribute(): string
+}
+
+' ============================================
+' RELATIONS
+' ============================================
+
+' Relations User
+User "0..*" -- "0..*" Role : "belongs to many\n(via user_roles)"
+User "1" -- "0..*" Order : "waiter_id\ncreates"
+User "1" -- "0..*" Payment : "cashier_id\nprocesses"
+User "1" -- "0..*" StockMovement : "user_id\nregisters"
+User "1" -- "0..*" ActivityLog : "user_id\nperforms"
+User "1" -- "0..*" Backup : "created_by\ncreates"
+
+' Relations Category
+Category "1" -- "0..*" MenuItem : "category_id\ncontains"
+
+' Relations MenuItem
+MenuItem "1" -- "0..*" OrderItem : "menu_item_id\nreferenced in"
+
+' Relations RestaurantTable
+RestaurantTable "1" -- "0..*" Order : "table_id\nhas"
+RestaurantTable "1" -- "0..*" Reservation : "table_id\nreserved for"
+
+' Relations Order
+Order "1" -- "0..*" OrderItem : "order_id\ncontains"
+Order "1" -- "0..1" Payment : "order_id\npaid by"
+
+' Relations StockItem
+StockItem "1" -- "0..*" StockMovement : "stock_item_id\nhas movements"
+
+note right of User
+    Rôles possibles:
+    - admin
+    - manager
+    - cashier
+    - waiter (serveur)
+    - cook (cuisinier)
+end note
+
+note right of Order
+    Statuts possibles:
+    - pending
+    - in_progress
+    - ready
+    - delivered
+    - paid
+    - cancelled
+end note
+
+note right of Payment
+    Méthodes de paiement:
+    - cash (espèces)
+    - card (carte)
+    - mobile
+    - other
+end note
+
+note right of StockMovement
+    Types de mouvement:
+    - in (entrée)
+    - out (sortie)
+    - adjustment (ajustement)
+    - waste (perte)
+end note
+
+@enduml
+

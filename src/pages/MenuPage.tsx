@@ -26,9 +26,14 @@ interface MenuItem {
   price: number;
   category_id: number;
   is_available: boolean;
-  image_url?: string;
+  image?: string;
   category?: Category;
 }
+
+const getImageUrl = (imagePath?: string) => {
+  if (!imagePath) return null;
+  return `http://localhost:8000/storage/${imagePath}`;
+};
 
 export default function MenuPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +49,8 @@ export default function MenuPage() {
     category_id: '',
     is_available: true,
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -71,14 +78,16 @@ export default function MenuPage() {
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: async (newItem: any) => {
-      await api.post('menu-items', newItem);
+    mutationFn: async (formData: FormData) => {
+      await api.post('menu-items', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
     },
     onSuccess: () => {
       toast.success('Plat créé avec succès');
+      queryClient.invalidateQueries({ queryKey: ['menu-items'] });
       setIsDialogOpen(false);
       resetForm();
-      queryClient.invalidateQueries({ queryKey: ['menu-items'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erreur lors de la création');
@@ -86,17 +95,19 @@ export default function MenuPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      await api.put(`/menu-items/${id}`, data);
+    mutationFn: async ({ id, formData }: { id: number; formData: FormData }) => {
+      await api.post(`/menu-items/${id}?_method=PUT`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
     },
     onSuccess: () => {
-      toast.success('Plat modifié avec succès');
+      toast.success('Plat mis à jour avec succès');
+      queryClient.invalidateQueries({ queryKey: ['menu-items'] });
       setIsDialogOpen(false);
       resetForm();
-      queryClient.invalidateQueries({ queryKey: ['menu-items'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erreur lors de la modification');
+      toast.error(error.response?.data?.message || 'Erreur lors de la mise à jour');
     }
   });
 
@@ -121,18 +132,33 @@ export default function MenuPage() {
       return;
     }
 
-    const payload = {
-      name: formData.name,
-      description: formData.description,
-      price: parseFloat(formData.price),
-      category_id: parseInt(formData.category_id),
-      is_available: formData.is_available
-    };
+    const form = new FormData();
+    form.append('name', formData.name);
+    form.append('description', formData.description);
+    form.append('price', formData.price);
+    form.append('category_id', formData.category_id);
+    form.append('is_available', formData.is_available ? '1' : '0');
+    
+    if (selectedImage) {
+      form.append('image', selectedImage);
+    }
 
     if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data: payload });
+      updateMutation.mutate({ id: editingItem.id, formData: form });
     } else {
-      createMutation.mutate(payload);
+      createMutation.mutate(form);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -168,6 +194,8 @@ export default function MenuPage() {
       category_id: '',
       is_available: true,
     });
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   return (
@@ -240,6 +268,38 @@ export default function MenuPage() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="image">Image du plat</Label>
+                  <div className="flex flex-col gap-2">
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg,image/webp"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                    />
+                    {imagePreview && (
+                      <div className="mt-2">
+                        <img 
+                          src={imagePreview} 
+                          alt="Prévisualisation" 
+                          className="w-32 h-24 object-cover rounded-md border"
+                        />
+                      </div>
+                    )}
+                    {editingItem?.image && !imagePreview && (
+                      <div className="mt-2">
+                        <img 
+                          src={getImageUrl(editingItem.image) || ''} 
+                          alt="Image actuelle" 
+                          className="w-32 h-24 object-cover rounded-md border"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Image actuelle</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center space-x-2 pt-2">
                   <Switch
                     id="available"
@@ -301,9 +361,9 @@ export default function MenuPage() {
             ) : menuItems.map((item) => (
               <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <div className="aspect-video bg-muted relative">
-                  {item.image_url ? (
+                  {item.image ? (
                     <img
-                      src={item.image_url}
+                      src={getImageUrl(item.image) || ''}
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />
