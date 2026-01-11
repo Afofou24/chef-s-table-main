@@ -31,7 +31,7 @@ export default function BackupPage() {
     }
   });
 
-  const backups: Backup[] = backupsResponse?.data || [];
+  const backups: Backup[] = backupsResponse?.data?.data || backupsResponse?.data || [];
   const latestBackup = backups.length > 0 ? backups[0] : null;
 
   // Create Backup Mutation

@@ -16,7 +16,7 @@ class BackupController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Backup::with('createdBy:id,first_name,last_name');
+        $query = Backup::query();
 
         if ($request->has('type')) {
             $query->where('type', $request->input('type'));
@@ -26,7 +26,10 @@ class BackupController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $backups = $query->orderBy('created_at', 'desc')
+        $backups = $query->with(['createdBy' => function ($query) {
+                $query->select('id', 'first_name', 'last_name');
+            }])
+            ->orderBy('created_at', 'desc')
             ->paginate($request->input('per_page', 15));
 
         return response()->json($backups);
@@ -41,7 +44,9 @@ class BackupController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $filename = 'backup_' . now()->format('Y-m-d_H-i-s') . '.sql';
+        $dbConnection = config('database.default');
+        $extension = $dbConnection === 'sqlite' ? '.sqlite' : '.sql';
+        $filename = 'backup_' . now()->format('Y-m-d_H-i-s') . $extension;
         $path = 'backups/' . $filename;
 
         $backup = Backup::create([
@@ -55,48 +60,63 @@ class BackupController extends Controller
         ]);
 
         try {
-            // PHP-native backup implementation (works without mysqldump binary)
-            // PHP-native backup implementation
-            // Force use of env variables to bypass potential caching/config mismatches
-            $dbHost = env('MYSQLHOST', env('DB_HOST', '127.0.0.1'));
-            $dbName = env('MYSQLDATABASE', env('DB_DATABASE', 'laravel'));
-            $dbUser = env('MYSQLUSER', env('DB_USERNAME', 'root'));
-            $dbPass = env('MYSQLPASSWORD', env('DB_PASSWORD', ''));
-            $dbPort = env('MYSQLPORT', env('DB_PORT', 3306));
-
             Storage::disk('local')->makeDirectory('backups');
             $absolutePath = Storage::disk('local')->path($path);
 
-            $dumpSettings = [
-                'compress' => 'None',
-                'no-data' => false,
-                'add-drop-table' => true,
-                'single-transaction' => true,
-                'lock-tables' => false,
-                'add-locks' => true,
-                'extended-insert' => true,
-                'disable-keys' => true,
-                'skip-triggers' => false,
-                'add-drop-trigger' => true,
-                'routines' => true,
-                'databases' => false,
-                'add-drop-database' => false,
-                'hex-blob' => true,
-                'no-create-info' => false,
-                'where' => ''
-            ];
+            if ($dbConnection === 'sqlite') {
+                // SQLite backup - simple file copy
+                $dbPath = database_path('database.sqlite');
+                
+                if (!file_exists($dbPath)) {
+                    throw new \Exception("SQLite database file not found at: {$dbPath}");
+                }
 
-            $dumper = new \Ifsnop\Mysqldump\Mysqldump(
-                "mysql:host={$dbHost};port={$dbPort};dbname={$dbName}",
-                $dbUser,
-                $dbPass,
-                $dumpSettings
-            );
+                if (!copy($dbPath, $absolutePath)) {
+                    throw new \Exception("Failed to copy SQLite database file.");
+                }
 
-            $dumper->start($absolutePath);
+                if (!file_exists($absolutePath) || filesize($absolutePath) === 0) {
+                    throw new \Exception("Backup file was not created or is empty.");
+                }
+            } else {
+                // MySQL backup using mysqldump
+                $dbHost = env('MYSQLHOST', env('DB_HOST', '127.0.0.1'));
+                $dbName = env('MYSQLDATABASE', env('DB_DATABASE', 'laravel'));
+                $dbUser = env('MYSQLUSER', env('DB_USERNAME', 'root'));
+                $dbPass = env('MYSQLPASSWORD', env('DB_PASSWORD', ''));
+                $dbPort = env('MYSQLPORT', env('DB_PORT', 3306));
 
-            if (!file_exists($absolutePath) || filesize($absolutePath) === 0) {
-                throw new \Exception("Backup file was not created or is empty.");
+                $dumpSettings = [
+                    'compress' => 'None',
+                    'no-data' => false,
+                    'add-drop-table' => true,
+                    'single-transaction' => true,
+                    'lock-tables' => false,
+                    'add-locks' => true,
+                    'extended-insert' => true,
+                    'disable-keys' => true,
+                    'skip-triggers' => false,
+                    'add-drop-trigger' => true,
+                    'routines' => true,
+                    'databases' => false,
+                    'add-drop-database' => false,
+                    'hex-blob' => true,
+                    'no-create-info' => false,
+                    'where' => ''
+                ];
+
+                $dumper = new \Ifsnop\Mysqldump\Mysqldump(
+                    "mysql:host={$dbHost};port={$dbPort};dbname={$dbName}",
+                    $dbUser,
+                    $dbPass,
+                    $dumpSettings
+                );
+
+                $dumper->start($absolutePath);
+
+                if (!file_exists($absolutePath) || filesize($absolutePath) === 0) {
+                    throw new \Exception("Backup file was not created or is empty.");
+                }
             }
 
             $backup->update([
@@ -106,7 +126,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'message' => 'Sauvegarde créée avec succès.',
-                'data' => $backup->fresh('createdBy:id,first_name,last_name'),
+                'data' => $backup->fresh()->load('createdBy:id,first_name,last_name'),
             ], 201);
 
         } catch (\Exception $e) {
@@ -168,48 +188,76 @@ class BackupController extends Controller
             ], 404);
         }
 
-        // Real restore implementation using mysql binary and Symfony Process
-        $mysqlPath = config('backup.mysql_path');
-        $dbHost = config('database.connections.mysql.host');
-        if ($dbHost === '127.0.0.1')
-            $dbHost = 'localhost';
-        $dbName = config('database.connections.mysql.database');
-        $dbUser = config('database.connections.mysql.username');
-        $dbPass = config('database.connections.mysql.password');
+        try {
+            $dbConnection = config('database.default');
+            $absolutePath = Storage::disk('local')->path($backup->path);
 
-        $env = array_merge($_SERVER, [
-            'SystemRoot' => getenv('SystemRoot') ?: 'C:\Windows',
-            'SystemDrive' => getenv('SystemDrive') ?: 'C:',
-            'TEMP' => getenv('TEMP'),
-            'TMP' => getenv('TMP'),
-            'PATH' => getenv('PATH'),
-        ]);
+            if ($dbConnection === 'sqlite') {
+                // SQLite restore - simple file copy
+                $dbPath = database_path('database.sqlite');
+                
+                // Create a backup of current database before restoring
+                $currentBackupPath = database_path('database_before_restore_' . now()->format('Y-m-d_H-i-s') . '.sqlite');
+                if (file_exists($dbPath)) {
+                    copy($dbPath, $currentBackupPath);
+                }
 
-        $absolutePath = Storage::disk('local')->path($backup->path);
+                // Restore from backup
+                if (!copy($absolutePath, $dbPath)) {
+                    throw new \Exception("Failed to restore SQLite database file.");
+                }
 
-        // Build command
-        $command = [
-            $mysqlPath,
-            '--user=' . $dbUser,
-            '--password=' . $dbPass,
-            '--host=' . $dbHost,
-            $dbName
-        ];
+                // Clear Laravel cache to avoid stale connections
+                Artisan::call('cache:clear');
+                
+            } else {
+                // MySQL restore using mysql binary and Symfony Process
+                $mysqlPath = config('backup.mysql_path');
+                $dbHost = config('database.connections.mysql.host');
+                if ($dbHost === '127.0.0.1')
+                    $dbHost = 'localhost';
+                $dbName = config('database.connections.mysql.database');
+                $dbUser = config('database.connections.mysql.username');
+                $dbPass = config('database.connections.mysql.password');
 
-        $process = new Process($command, null, $env);
-        $process->setInput(file_get_contents($absolutePath));
-        $process->run();
+                $env = array_merge($_SERVER, [
+                    'SystemRoot' => getenv('SystemRoot') ?: 'C:\Windows',
+                    'SystemDrive' => getenv('SystemDrive') ?: 'C:',
+                    'TEMP' => getenv('TEMP'),
+                    'TMP' => getenv('TMP'),
+                    'PATH' => getenv('PATH'),
+                ]);
 
-        if (!$process->isSuccessful()) {
+                // Build command
+                $command = [
+                    $mysqlPath,
+                    '--user=' . $dbUser,
+                    '--password=' . $dbPass,
+                    '--host=' . $dbHost,
+                    $dbName
+                ];
+
+                $process = new Process($command, null, $env);
+                $process->setInput(file_get_contents($absolutePath));
+                $process->run();
+
+                if (!$process->isSuccessful()) {
+                    throw new \Exception("mysql failed (code " . $process->getExitCode() . "): " . $process->getErrorOutput());
+                }
+            }
+
+            return response()->json([
+                'message' => 'Restauration effectuée avec succès.',
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Restore failed: ' . $e->getMessage());
+            
             return response()->json([
                 'message' => 'Erreur lors de la restauration.',
-                'error' => "mysql failed (code " . $process->getExitCode() . "): " . $process->getErrorOutput(),
+                'error' => $e->getMessage(),
             ], 500);
         }
-
-        return response()->json([
-            'message' => 'Restauration effectuée avec succès.',
-        ]);
     }
 
     /**
