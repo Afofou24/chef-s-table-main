@@ -54,7 +54,7 @@ services:
   # ---------------------------------------------------------------------------------------
   # 2. Frontend Service (React - Static Site)
   # ---------------------------------------------------------------------------------------
-  - type: static
+  - type: staticSite
     name: chefs-table-frontend
     env: static
     buildCommand: npm install && npm run build
