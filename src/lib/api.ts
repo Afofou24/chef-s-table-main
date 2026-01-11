@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api').replace(/\/$/, '') + '/',
+    baseURL: (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api').replace(/\/$/, '').replace(/\/api$/, '') + '/api/',
     // withCredentials: true, // Not needed for Token auth, but doesn't hurt. 
     // Actually better false if we want to avoid CORS credential issues if relying purely on token.
     headers: {
